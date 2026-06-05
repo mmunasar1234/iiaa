@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>QR Code — Martiqaad Aroos</title>
+  <link rel="stylesheet" href="mobile.css" />
+  <script src="qr-lib.js"></script>
+  <style>
+    :root { --gold: #c9a962; --cream: #faf7f2; --dark: #2c2416; --ok: #2d6a4f; --err: #b33; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: radial-gradient(ellipse at top, #3d3229 0%, var(--dark) 55%);
+      min-height: 100vh;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: var(--cream);
+      color: var(--dark);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      max-width: 760px;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 1.25rem;
+      border: 1px solid rgba(201, 169, 98, 0.35);
+    }
+    .qr-side {
+      flex: 0 0 auto;
+      background: #fff;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 2px solid var(--gold);
+      text-align: center;
+    }
+    #qrCanvas {
+      display: block;
+      width: 220px;
+      height: 220px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .scan-label {
+      margin-top: 0.45rem;
+      font-size: 0.58rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .info-side { flex: 1; min-width: 0; }
+    h1 {
+      font-family: Georgia, serif;
+      font-size: 1.6rem;
+      font-style: italic;
+      margin-bottom: 0.15rem;
+    }
+    .sub {
+      font-size: 0.68rem;
+      color: #666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+    }
+    label {
+      display: block;
+      font-size: 0.62rem;
+      color: #777;
+      text-transform: uppercase;
+      margin: 0.35rem 0 0.2rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+    .url-box {
+      font-size: 0.6rem;
+      word-break: break-all;
+      background: #f5f0e8;
+      padding: 0.4rem 0.55rem;
+      border-radius: 4px;
+      margin-bottom: 0.45rem;
+      line-height: 1.35;
+    }
+    .msg { font-size: 0.68rem; margin-bottom: 0.35rem; }
+    .msg.ok { color: var(--ok); }
+    .msg.err { color: var(--err); }
+    .btns { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    button {
+      padding: 0.5rem 0.7rem;
+      font-size: 0.58rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-primary { background: var(--gold); color: #fff; }
+    .btn-secondary { background: transparent; color: var(--dark); border: 1px solid var(--gold); }
+    .hint { margin-top: 0.5rem; font-size: 0.56rem; color: #999; line-height: 1.45; }
+    .nav-links { margin-top: 0.35rem; font-size: 0.56rem; }
+    .nav-links a { color: var(--gold); text-decoration: none; margin-right: 0.35rem; }
+    @media (max-width: 600px) {
+      .card { flex-direction: column; text-align: center; max-width: 360px; }
+      .btns { justify-content: center; }
+    }
+    @media print {
+      @page { size: landscape; margin: 10mm; }
+      body { background: #fff; }
+      .btns, .page-select, .hint, .nav-links, label, input, select, .msg { display: none !important; }
+      .card { box-shadow: none; border: 1px solid #ccc; width: 100%; }
+    }
+  </style>
+</head>
+<body class="page-qr">
+  <div class="card" id="printCard">
+    <div class="qr-side">
+      <canvas id="qrCanvas"></canvas>
+      <p class="scan-label">Scan QR → website</p>
+    </div>
+
+    <div class="info-side">
+      <h1>Martiqaad Aroos</h1>
+      <p class="sub">QR code · jiif</p>
+
+      <label>Link website (https)</label>
+      <input type="url" id="siteUrl" placeholder="https://username.github.io/wedding/" />
+      <button type="button" class="btn-secondary" id="btnUseHere" style="width:100%;margin-bottom:0.35rem">Kaydi linkkan</button>
+
+      <label>Martiqaad</label>
+      <select class="page-select" id="pageSelect">
+        <option value="classic.html">Index</option>
+        <option value="naqsho2.html">Naqsho 2</option>
+        <option value="naqsho3.html">Naqsho 3</option>
+      </select>
+
+      <label><input type="checkbox" id="welcomeFlag" /> Fur martiqaad toos marka la scan gareeyo</label>
+
+      <p class="msg" id="statusMsg"></p>
+      <p class="msg" id="dataMsg" style="color:#555"></p>
+      <p class="url-box" id="urlText"></p>
+
+      <div class="btns">
+        <button type="button" class="btn-primary" id="btnNew">Cusboonaysii QR</button>
+        <button type="button" class="btn-secondary" id="btnTest">Tijaabi</button>
+        <button type="button" class="btn-secondary" id="btnCopy">Nuqul</button>
+        <button type="button" class="btn-secondary" id="btnSave">Kaydi PNG</button>
+        <button type="button" class="btn-secondary" id="btnPrint">Daabac Jiif</button>
+      </div>
+
+      <p class="hint">QR wuxuu wataa <strong>dhammaan xogta</strong> martiqaadka (magacyo, taariikh, goob, qoraal, sawirro). Scan telefoon → toos wuu furaa xogtaada.</p>
+      <p class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="classic.html">Index</a>
+        <a href="edit.html">Beddel</a>
+      </p>
+    </div>
+  </div>
+
+  <canvas id="exportCanvas" hidden></canvas>
+
+  <script>
+    (function() {
+      var canvas = document.getElementById('qrCanvas');
+      var exportCanvas = document.getElementById('exportCanvas');
+      var siteUrl = document.getElementById('siteUrl');
+      var pageSelect = document.getElementById('pageSelect');
+      var welcomeFlag = document.getElementById('welcomeFlag');
+      var urlText = document.getElementById('urlText');
+      var statusMsg = document.getElementById('statusMsg');
+      var dataMsg = document.getElementById('dataMsg');
+      var lastUrl = '';
+      var lastRev = '';
+      var WQ = window.WeddingQR;
+
+      function syncLinkFromStorage() {
+        try {
+          var raw = localStorage.getItem('wedding-public-url-raw') ||
+            localStorage.getItem('wedding-public-url');
+          if (raw && raw.trim() && raw.indexOf('magacaaga.github.io') === -1) {
+            siteUrl.value = raw.trim();
+            return true;
+          }
+        } catch (e) { /* */ }
+        return false;
+      }
+
+      function loadPrefs() {
+        if (!syncLinkFromStorage()) {
+          var saved = WQ.getPublicBase();
+          if (saved) siteUrl.value = saved;
+          else if (location.protocol !== 'file:') siteUrl.value = location.href.replace(/[^/]*$/, '');
+        }
+
+        var savedPage = localStorage.getItem('wedding-qr-page');
+        if (savedPage && pageSelect.querySelector('option[value="' + savedPage + '"]')) {
+          pageSelect.value = savedPage;
+        }
+        var pre = new URLSearchParams(location.search).get('page');
+        if (pre && pageSelect.querySelector('option[value="' + pre + '"]')) pageSelect.value = pre;
+
+        welcomeFlag.checked = localStorage.getItem('wedding-qr-welcome') !== '0';
+      }
+
+      function currentKey() {
+        return WQ.pageToKey(pageSelect.value);
+      }
+
+      function buildUrl() {
+        var link = siteUrl.value.trim();
+        if (!link) throw new Error('Geli link website-kaaga');
+        WQ.setPublicBase(link);
+        localStorage.setItem('wedding-qr-page', pageSelect.value);
+        localStorage.setItem('wedding-qr-welcome', welcomeFlag.checked ? '1' : '0');
+        return WQ.buildInviteLink(pageSelect.value, {
+          welcome: welcomeFlag.checked,
+          base: link
+        });
+      }
+
+      function updateDataLine() {
+        var sum = WQ.readConfigSummary(currentKey());
+        if (!sum || (!sum.groom && !sum.bride)) {
+          dataMsg.textContent = 'Xog: weli ma jirto — fur edit.html oo kaydi';
+          return;
+        }
+        dataMsg.textContent = 'Xog QR: ' + (sum.groom || '—') + ' & ' + (sum.bride || '—') +
+          (sum.date ? ' · ' + sum.date : '') +
+          (sum.venue ? ' · ' + sum.venue : '') +
+          (sum.hasPack ? ' · dhammaan xogta waa ku jirtaa' : ' · qoraal kaliya');
+      }
+
+      function render() {
+        try {
+          if (!siteUrl.value.trim()) {
+            statusMsg.textContent = 'Geli link website-kaaga (kan aad edit.html dhigtay)';
+            statusMsg.className = 'msg err';
+            updateDataLine();
+            return;
+          }
+          lastUrl = buildUrl();
+          lastRev = WQ.getRevision(currentKey()) || WQ.getRevision('index');
+          updateDataLine();
+          urlText.innerHTML = '<strong>Link QR:</strong><br><a href="' + lastUrl + '" target="_blank" rel="noopener" style="color:#666">' + lastUrl + '</a>';
+          statusMsg.textContent = 'Soo saaraya QR...';
+          statusMsg.className = 'msg';
+          function drawQr(url) {
+            return WQ.draw(canvas, url, { size: 280, ecLevel: 'H', dark: '#000000', light: '#ffffff' });
+          }
+          drawQr(lastUrl)
+            .then(function() {
+              statusMsg.textContent = 'QR diyaar — magacyo, taariikh, goob, qoraal + sawirro waa ku jiraan';
+              statusMsg.className = 'msg ok';
+            })
+            .catch(function(e) {
+              if (lastUrl.indexOf('p=') >= 0) {
+                var u2 = new URL(lastUrl);
+                u2.searchParams.delete('p');
+                lastUrl = u2.href;
+                urlText.innerHTML = '<a href="' + lastUrl + '" target="_blank" rel="noopener" style="color:#666">' + lastUrl + '</a>';
+                return drawQr(lastUrl).then(function() {
+                  statusMsg.textContent = 'QR diyaar — qoraalka waa ku jiraa (sawirrada aad u weyn)';
+                  statusMsg.className = 'msg ok';
+                });
+              }
+              statusMsg.textContent = e.message || String(e);
+              statusMsg.className = 'msg err';
+            });
+        } catch (e) {
+          statusMsg.textContent = e.message || String(e);
+          statusMsg.className = 'msg err';
+        }
+      }
+
+      function watchConfigChanges() {
+        var rev = WQ.getRevision(currentKey()) || localStorage.getItem('wedding-cfg-rev-global') || '';
+        if (rev && rev !== lastRev) render();
+      }
+
+      document.getElementById('btnUseHere').onclick = function() {
+        var typed = siteUrl.value.trim();
+        if (typed) {
+          WQ.setPublicBase(typed);
+          render();
+          statusMsg.textContent = 'Link-kaaga waa la kaydiyay';
+          statusMsg.className = 'msg ok';
+          return;
+        }
+        if (location.protocol !== 'file:') {
+          siteUrl.value = location.href.replace(/[^/]*$/, '');
+          WQ.setPublicBase(siteUrl.value);
+          render();
+        } else {
+          statusMsg.textContent = 'Geli link https — kadib riix Kaydi linkkan';
+          statusMsg.className = 'msg err';
+        }
+      };
+
+      document.getElementById('btnNew').onclick = render;
+      siteUrl.oninput = function() {
+        if (siteUrl.value.trim()) WQ.setPublicBase(siteUrl.value.trim());
+        render();
+      };
+      siteUrl.onchange = render;
+      pageSelect.onchange = render;
+      welcomeFlag.onchange = render;
+
+      window.addEventListener('storage', function(e) {
+        if (!e.key) return;
+        if (e.key === 'wedding-public-url') syncLinkFromStorage();
+        if (e.key.indexOf('wedding-cfg') === 0 || e.key === 'wedding-public-url') render();
+      });
+      window.addEventListener('focus', function() {
+        syncLinkFromStorage();
+        watchConfigChanges();
+      });
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) watchConfigChanges();
+      });
+      setInterval(watchConfigChanges, 2000);
+
+      loadPrefs();
+
+      document.getElementById('btnTest').onclick = function() {
+        window.open(buildUrl(), '_blank');
+      };
+
+      document.getElementById('btnCopy').onclick = function() {
+        if (!lastUrl) render();
+        navigator.clipboard.writeText(lastUrl).then(function() {
+          statusMsg.textContent = 'Link la nuqulay';
+          statusMsg.className = 'msg ok';
+        });
+      };
+
+      document.getElementById('btnPrint').onclick = function() { window.print(); };
+
+      document.getElementById('btnSave').onclick = function() {
+        if (!lastUrl) return;
+        var W = 820, H = 300, pad = 28, qrSize = 260;
+        exportCanvas.width = W;
+        exportCanvas.height = H;
+        var ctx = exportCanvas.getContext('2d');
+        ctx.fillStyle = '#faf7f2';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#c9a962';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, W - 2, H - 2);
+        var tmp = document.createElement('canvas');
+        WQ.draw(tmp, lastUrl, { size: qrSize, ecLevel: 'H' }).then(function() {
+          ctx.drawImage(tmp, pad + 10, (H - qrSize) / 2, qrSize, qrSize);
+          ctx.fillStyle = '#2c2416';
+          ctx.font = 'italic 28px Georgia, serif';
+          ctx.fillText('Martiqaad Aroos', 280, 50);
+          ctx.font = '11px system-ui,sans-serif';
+          ctx.fillStyle = '#666';
+          ctx.fillText('SCAN QR CODE', 280, 72);
+          ctx.font = '9px system-ui,sans-serif';
+          ctx.fillStyle = '#888';
+          (lastUrl.match(/.{1,48}/g) || [lastUrl]).slice(0, 5).forEach(function(line, i) {
+            ctx.fillText(line, 280, 95 + i * 14);
+          });
+          var a = document.createElement('a');
+          a.download = 'martiqaad-qr-' + Date.now() + '.png';
+          a.href = exportCanvas.toDataURL('image/png');
+          a.click();
+        });
+      };
+
+      render();
+    })();
+  </script>
+</body>
+</html>

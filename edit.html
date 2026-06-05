@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="mobile.css" />
+  <title>Beddel Martiqaadka — Admin</title>
+  <script src="wedding-store.js"></script>
+  <script src="image-tools.js"></script>
+  <style>
+    :root { --gold: #c9a962; --dark: #2c2416; --cream: #faf7f2; --ok: #2d6a4f; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--cream);
+      color: var(--dark);
+      line-height: 1.5;
+      padding-bottom: 5rem;
+    }
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--dark);
+      color: #fff;
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .top h1 { font-size: 1rem; font-weight: 600; flex: 1; min-width: 140px; }
+    .status { font-size: 0.7rem; color: var(--gold); }
+    .btn {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-gold { background: var(--gold); color: #fff; }
+    .btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.35); }
+    .btn-dark { background: var(--dark); color: #fff; border: 1px solid var(--gold); }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 1rem; }
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+    }
+    .tab {
+      padding: 0.55rem 0.9rem;
+      font-size: 0.75rem;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab.active { background: var(--dark); color: #fff; border-color: var(--dark); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 0.85rem;
+      border: 1px solid #e8e0d4;
+    }
+    .card h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #eee;
+    }
+    label {
+      display: block;
+      font-size: 0.68rem;
+      color: #666;
+      margin: 0.55rem 0 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input[type="text"], input[type="url"], input[type="tel"], input[type="datetime-local"], textarea, select {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+    .preview {
+      width: 100%;
+      max-height: 120px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-top: 0.35rem;
+      background: #eee;
+    }
+    .preview-sm { max-height: 72px; max-width: 72px; object-fit: cover; border-radius: 50%; }
+    .img-editor-frame {
+      width: 100%;
+      height: 180px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #111 center/cover no-repeat;
+      margin: 0.5rem 0;
+      border: 1px solid #ddd;
+    }
+    #frameHero { min-height: 180px; }
+    .img-editor-frame.round { height: 140px; width: 140px; border-radius: 50%; margin: 0.5rem auto; }
+    .img-editor-frame img { width: 100%; height: 100%; display: block; }
+    .img-sliders { display: grid; gap: 0.35rem; margin-top: 0.35rem; }
+    .img-sliders label { font-size: 0.62rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; }
+    .img-sliders input[type=range] { flex: 1; }
+    .img-sliders span { min-width: 2.5rem; text-align: right; font-size: 0.65rem; color: #666; }
+    .gal-preview { width: 56px; height: 56px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: #111; }
+    .gal-preview img { width: 100%; height: 100%; }
+    .gallery-item { flex-wrap: wrap; align-items: center; }
+    .gallery-item .gal-fields { flex: 1; min-width: 140px; }
+    .gallery-item .img-sliders { margin-top: 0.25rem; }
+    .file-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.35rem; }
+    .file-row input[type="file"] { font-size: 0.72rem; max-width: 100%; }
+    .gallery-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .gallery-item { display: flex; gap: 0.5rem; align-items: flex-start; }
+    .gallery-item input { flex: 1; }
+    .hint { font-size: 0.65rem; color: #999; margin-top: 0.35rem; }
+    .design-pick {
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 2px solid var(--gold);
+      font-size: 0.85rem;
+    }
+    .check-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0; font-size: 0.8rem; }
+    .check-row input { width: auto; }
+    .music-name { font-size: 0.75rem; color: var(--ok); margin-top: 0.35rem; }
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #e0d8cc;
+      padding: 0.65rem 1rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      z-index: 9;
+    }
+    audio { width: 100%; margin-top: 0.5rem; height: 36px; }
+    .preview-frame {
+      width: 100%;
+      height: 280px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top">
+    <h1>Beddel Martiqaadka</h1>
+    <span class="status" id="status">Diyaar</span>
+    <a class="btn btn-outline" href="index.html">Bogagga</a>
+    <button type="button" class="btn btn-gold" id="btnSave">Kaydi</button>
+  </header>
+
+  <div class="wrap">
+    <select class="design-pick" id="designPick" aria-label="Dooro naqshadda">
+      <option value="index">Index (classic.html)</option>
+      <option value="naqsho2">Naqsho 2 — Jardiino</option>
+      <option value="naqsho3">Naqsho 3 — Habeen Casri</option>
+    </select>
+
+    <label class="check-row">
+      <input type="checkbox" id="syncCore" checked />
+      Magacyo, taariikh, goobta, QR link — dhammaan naqshooyinka
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="syncFull" />
+      Wax walba (qoraal + sawirro) — dhammaan naqshooyinka
+    </label>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab active" data-tab="names">Magacyo</button>
+      <button type="button" class="tab" data-tab="venue">Goobta</button>
+      <button type="button" class="tab" data-tab="texts">Qoraal</button>
+      <button type="button" class="tab" data-tab="images">Sawirro</button>
+      <button type="button" class="tab" data-tab="music">Muusig</button>
+    </div>
+
+    <div id="panel-names" class="panel active">
+      <div class="card">
+        <h2>Arooska &amp; Aroosada</h2>
+        <div class="row2">
+          <div>
+            <label>Magaca arooska</label>
+            <input type="text" id="groomName" />
+            <label>Hadal gaaban</label>
+            <input type="text" id="groomQuote" />
+          </div>
+          <div>
+            <label>Magaca aroosada</label>
+            <input type="text" id="brideName" />
+            <label>Hadal gaaban</label>
+            <input type="text" id="brideQuote" />
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Taariikh &amp; QR link</h2>
+        <label>Taariikhda (qoraal — tusaale: 15 Juun 2026)</label>
+        <input type="text" id="dateText" />
+        <label>Taariikhda countdown (dooro taariikh + saacad)</label>
+        <input type="datetime-local" id="dateISO" />
+        <label>WhatsApp (kaydin kaliya — ma muuqdo martiqaadka)</label>
+        <input type="tel" id="whatsapp" placeholder="252612345678" />
+        <label>Link internet (QR scan — GitHub/Netlify)</label>
+        <input type="url" id="publicSiteUrl" placeholder="https://username.github.io/wedding/" />
+      </div>
+    </div>
+
+    <div id="panel-venue" class="panel">
+      <div class="card">
+        <h2>Goobta arooska</h2>
+        <label>Cinwaan hoose / weyn (qoraalka)</label>
+        <input type="text" id="venueSub" />
+        <input type="text" id="venueTitle" style="margin-top:0.4rem" />
+        <label>Magaca goobta</label>
+        <input type="text" id="venueName" />
+        <label>Cinwaanka / magaalada</label>
+        <input type="text" id="venueAddress" />
+        <label>Saacadda</label>
+        <input type="text" id="venueTime" placeholder="4:00 Galabnimo" />
+        <label>Link khariidadda (Google Maps)</label>
+        <input type="url" id="venueMapUrl" placeholder="https://maps.google.com/..." />
+        <label>Badhanka khariidadda</label>
+        <input type="text" id="venueBtn" />
+      </div>
+    </div>
+
+    <div id="panel-texts" class="panel">
+      <div class="card">
+        <h2>Bilawga (splash)</h2>
+        <label>Hordhac</label>
+        <input type="text" id="splashSub" />
+        <label>Tilmaan (taabo…)</label>
+        <input type="text" id="splashHint" />
+      </div>
+      <div class="card">
+        <h2>Hero &amp; guud</h2>
+        <label>Hero hordhac</label>
+        <input type="text" id="heroSub" />
+        <label>Hoos u eeg</label>
+        <input type="text" id="scrollHint" />
+        <label>Couple cinwaan hoose</label>
+        <input type="text" id="coupleSub" />
+        <label>Couple cinwaan weyn</label>
+        <input type="text" id="coupleTitle" />
+        <label>Doorka arooska / aroosada</label>
+        <div class="row2">
+          <input type="text" id="groomRole" placeholder="Arooska" />
+          <input type="text" id="brideRole" placeholder="Aroosada" />
+        </div>
+      </div>
+      <div class="card">
+        <h2>Jacayl &amp; gallery &amp; countdown</h2>
+        <label>Jacayl hoose / cinwaan / qiso</label>
+        <input type="text" id="loveSub" />
+        <input type="text" id="loveTitle" style="margin-top:0.4rem" />
+        <textarea id="loveQuote"></textarea>
+        <input type="text" id="loveSign" style="margin-top:0.4rem" />
+        <label>Gallery</label>
+        <input type="text" id="gallerySub" />
+        <input type="text" id="galleryTitle" style="margin-top:0.4rem" />
+        <label>Countdown</label>
+        <input type="text" id="countdownSub" />
+        <input type="text" id="countdownTitle" style="margin-top:0.4rem" />
+        <div class="row2" style="margin-top:0.4rem">
+          <input type="text" id="countdownDays" placeholder="Maalmood" />
+          <input type="text" id="countdownHours" placeholder="Saacado" />
+          <input type="text" id="countdownMins" placeholder="Daqiiqo" />
+          <input type="text" id="countdownSecs" placeholder="Ilbiriqsi" />
+        </div>
+      </div>
+      <div class="card">
+        <h2>Footer (martiqaadka)</h2>
+        <p class="hint">Marti ma arko Bogagga / Beddel / QR / WhatsApp — kaliya magac + qoraalkan hoose.</p>
+        <input type="text" id="rsvpSub" hidden aria-hidden="true" />
+        <input type="text" id="rsvpTitle" hidden aria-hidden="true" />
+        <textarea id="rsvpMessage" hidden aria-hidden="true"></textarea>
+        <input type="text" id="rsvpBtn" hidden aria-hidden="true" />
+        <input type="text" id="waMessage" hidden aria-hidden="true" />
+        <label>Qoraalka footer</label>
+        <input type="text" id="footerTag" placeholder="Jacayl weligiis ah" />
+      </div>
+    </div>
+
+    <div id="panel-images" class="panel">
+      <div class="card">
+        <h2>Sawirka weyn (hero)</h2>
+        <p class="hint">Upload → dooro booska &amp; cabbirka</p>
+        <input type="url" id="heroImage" placeholder="https://… ama upload" />
+        <div class="file-row">
+          <input type="file" accept="image/*" data-target="heroImage" data-frame="frameHero" />
+        </div>
+        <div class="img-editor-frame" id="frameHero"></div>
+        <div class="img-sliders" data-sliders="hero">
+          <label>Dhinac (X) <input type="range" data-k="hero" data-axis="x" min="0" max="100" value="50" /><span>50</span></label>
+          <label>Kor/Hoos (Y) <input type="range" data-k="hero" data-axis="y" min="0" max="100" value="50" /><span>50</span></label>
+          <label>Cabbir <input type="range" data-k="hero" data-axis="zoom" min="80" max="200" value="100" /><span>100</span></label>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Sawirada lamaanaha</h2>
+        <label>Arooska</label>
+        <input type="url" id="groomPhoto" />
+        <div class="file-row"><input type="file" accept="image/*" data-target="groomPhoto" data-frame="frameGroom" /></div>
+        <div class="img-editor-frame round" id="frameGroom"></div>
+        <div class="img-sliders" data-sliders="groom">
+          <label>Dhinac <input type="range" data-k="groom" data-axis="x" min="0" max="100" value="50" /><span>50</span></label>
+          <label>Kor/Hoos <input type="range" data-k="groom" data-axis="y" min="0" max="100" value="50" /><span>50</span></label>
+          <label>Cabbir <input type="range" data-k="groom" data-axis="zoom" min="80" max="200" value="100" /><span>100</span></label>
+        </div>
+        <label style="margin-top:0.75rem">Aroosada</label>
+        <input type="url" id="bridePhoto" />
+        <div class="file-row"><input type="file" accept="image/*" data-target="bridePhoto" data-frame="frameBride" /></div>
+        <div class="img-editor-frame round" id="frameBride"></div>
+        <div class="img-sliders" data-sliders="bride">
+          <label>Dhinac <input type="range" data-k="bride" data-axis="x" min="0" max="100" value="50" /><span>50</span></label>
+          <label>Kor/Hoos <input type="range" data-k="bride" data-axis="y" min="0" max="100" value="50" /><span>50</span></label>
+          <label>Cabbir <input type="range" data-k="bride" data-axis="zoom" min="80" max="200" value="100" /><span>100</span></label>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Gallery (ilaa 8 sawir)</h2>
+        <div class="gallery-list" id="galleryList"></div>
+        <button type="button" class="btn btn-dark" id="btnAddGallery" style="margin-top:0.5rem">+ Sawir</button>
+        <p class="hint">Upload ama ku dheji link (URL)</p>
+      </div>
+    </div>
+
+    <div id="panel-music" class="panel">
+      <div class="card">
+        <h2>Muusigga martiqaadka</h2>
+        <p class="hint">Upload MP3 — wuxuu ku kaydsan yahay browser-kaaga (IndexedDB). Ama ku dheji magaca faylka haddii aad folder-ka gelisay.</p>
+        <label>Link fayl (ikhtiyaari)</label>
+        <input type="text" id="musicUrl" placeholder="music-index.mp3" />
+        <div class="file-row">
+          <input type="file" id="musicFile" accept="audio/mpeg,audio/mp3,audio/*" />
+        </div>
+        <p class="music-name" id="musicStatus"></p>
+        <audio id="musicPreview" controls hidden></audio>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Eeg toos ah</h2>
+      <p class="hint">Kaydi kadib — refresh preview:</p>
+      <p style="margin-top:0.35rem" id="previewLinks"></p>
+      <iframe class="preview-frame" id="livePreview" title="Preview"></iframe>
+      <button type="button" class="btn btn-dark" id="btnRefreshPreview" style="margin-top:0.5rem">Cusbooneysii preview</button>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button type="button" class="btn btn-gold" id="btnSave2">Kaydi Hadda</button>
+    <button type="button" class="btn btn-dark" id="btnExportAll">Soo daji dhammaan</button>
+    <button type="button" class="btn btn-dark" id="btnExport">JSON hal naqshad</button>
+    <label class="btn btn-dark" style="cursor:pointer">Soo geli JSON<input type="file" id="importFile" accept="application/json" hidden /></label>
+    <button type="button" class="btn btn-outline" id="btnReset" style="color:var(--dark);border-color:#ccc">Dib u celi default</button>
+  </div>
+
+  <script src="wedding-base.js"></script>
+  <script src="config-index.js"></script>
+  <script>window.__defaults = { index: JSON.parse(JSON.stringify(WEDDING_CONFIG)) };</script>
+  <script src="config-naqsho2.js"></script>
+  <script>window.__defaults.naqsho2 = JSON.parse(JSON.stringify(WEDDING_CONFIG));</script>
+  <script src="config-naqsho3.js"></script>
+  <script>window.__defaults.naqsho3 = JSON.parse(JSON.stringify(WEDDING_CONFIG));</script>
+  <script src="qr-lib.js"></script>
+  <script src="wedding-editor.js"></script>
+  <script>WeddingEditor.init();</script>
+</body>
+</html>

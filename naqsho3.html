@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="so" data-wedding-key="naqsho3">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="mobile.css" />
+  <title>Naqsho 3 — Habeen Casri</title>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;500&display=swap" rel="stylesheet" />
+  <script src="wedding-base.js"></script>
+  <script src="config-naqsho3.js"></script>
+  <script src="qr-lib.js"></script>
+  <script src="wedding-store.js"></script>
+  <script src="config-loader.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --neon: #ff4d6d;
+      --cyan: #00f5d4;
+      --purple: #7b2cbf;
+      --glass: rgba(255,255,255,0.06);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* SPLASH — iris camera */
+    .splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      overscroll-behavior: none;
+      clip-path: circle(35% at 50% 50%);
+      transition: clip-path 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 1s, visibility 0.5s ease 1s;
+    }
+    .splash.opening {
+      clip-path: circle(150% at 50% 50%);
+    }
+    .splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-inner {
+      text-align: center;
+      cursor: pointer;
+      z-index: 2;
+      padding: 2rem;
+    }
+    .splash.opening .splash-inner { opacity: 0; transition: opacity 0.3s; }
+
+    .neon-ring {
+      width: 160px; height: 160px;
+      margin: 0 auto 2rem;
+      border-radius: 50%;
+      border: 2px solid var(--neon);
+      box-shadow: 0 0 30px var(--neon), inset 0 0 30px rgba(255,77,109,0.2);
+      display: flex; align-items: center; justify-content: center;
+      animation: neonPulse 2s ease-in-out infinite;
+    }
+    @keyframes neonPulse {
+      0%, 100% { box-shadow: 0 0 20px var(--neon), inset 0 0 20px rgba(255,77,109,0.2); }
+      50% { box-shadow: 0 0 50px var(--neon), 0 0 80px var(--cyan), inset 0 0 30px rgba(255,77,109,0.3); }
+    }
+    #splashInitials {
+      font-family: 'Abril Fatface', serif;
+      font-size: 2.5rem;
+      color: #fff;
+    }
+
+    #splashSub {
+      font-size: 0.65rem;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1rem;
+    }
+    .splash-names-stack {
+      font-family: 'Abril Fatface', serif;
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      line-height: 1.2;
+      background: linear-gradient(90deg, var(--neon), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+  <style>
+    #splashGroom, #splashBride { display: block; }
+    .splash-amp-line {
+      width: 40px; height: 2px;
+      background: linear-gradient(90deg, var(--neon), var(--cyan));
+      margin: 0.5rem auto;
+    }
+    #splashHint {
+      margin-top: 1.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,245,212,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,212,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .music-control {
+      position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1000;
+      width: 44px; height: 44px;
+      background: var(--glass);
+      border: 1px solid var(--neon);
+      color: var(--neon);
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      opacity: 0; pointer-events: none;
+    }
+    .music-control.show { opacity: 1; pointer-events: auto; }
+    .music-control.playing .music-waves { display: flex; gap: 2px; align-items: flex-end; height: 14px; justify-content: center; }
+    .music-waves span { width: 3px; background: var(--cyan); animation: wv 0.5s ease infinite; }
+    .music-control:not(.playing) .music-waves { display: none; }
+    @keyframes wv { 50% { transform: scaleY(1.4); } }
+
+    /* HERO — typography only */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      padding: 2rem;
+      overflow: hidden;
+    }
+    .hero-mesh {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(123,44,191,0.4) 0%, transparent 70%);
+      top: -20%; right: -20%;
+      animation: meshMove 8s ease-in-out infinite alternate;
+    }
+    .hero-mesh2 {
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,77,109,0.25) 0%, transparent 70%);
+      bottom: -10%; left: -15%;
+      animation: meshMove 10s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes meshMove {
+      to { transform: translate(30px, 30px); }
+    }
+
+    #heroBg {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.35;
+      pointer-events: none;
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+    .hero-content { position: relative; z-index: 2; }
+
+    #heroSub {
+      font-size: 0.7rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 2rem;
+    }
+    .hero-mega {
+      font-family: 'Abril Fatface', serif;
+      font-size: clamp(4rem, 18vw, 11rem);
+      line-height: 0.9;
+      letter-spacing: -2px;
+    }
+    #heroGroom {
+      display: block;
+      background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.5));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #heroBride {
+      display: block;
+      background: linear-gradient(180deg, var(--neon), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-ampersand {
+      font-size: clamp(2rem, 6vw, 4rem);
+      color: var(--cyan);
+      margin: 0.2rem 0;
+      font-weight: 300;
+    }
+    #heroDate {
+      margin-top: 2rem;
+      font-size: 0.85rem;
+      letter-spacing: 6px;
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(0,245,212,0.3);
+      display: inline-block;
+      padding: 0.6rem 1.5rem;
+    }
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    section { padding: 4rem 1.5rem; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+    .section-sub {
+      font-size: 0.65rem;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--neon);
+      text-align: center;
+    }
+    .section-title {
+      font-family: 'Abril Fatface', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      text-align: center;
+      margin: 0.5rem 0 2.5rem;
+    }
+
+    /* COUPLE — glass cards */
+    .couple-section { max-width: 100%; }
+    .couple-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .couple-card {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      transform: translateY(40px);
+      transition: 0.7s ease;
+    }
+    .couple-card.visible { opacity: 1; transform: translateY(0); }
+    .couple-card:first-child { border-color: rgba(255,77,109,0.3); }
+    .couple-card:last-child { border-color: rgba(0,245,212,0.3); }
+
+    .photo-frame {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid var(--neon);
+      margin: 0 auto 1rem;
+    }
+    .couple-photo {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      border: none;
+      margin: 0;
+    }
+    .couple-card:last-child .photo-frame { border-color: var(--cyan); }
+    .couple-name { font-family: 'Abril Fatface', serif; font-size: 1.8rem; }
+    .couple-role { font-size: 0.6rem; letter-spacing: 3px; color: var(--cyan); margin-top: 0.3rem; }
+    .couple-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 0.8rem; line-height: 1.6; }
+
+    /* GALLERY — xusuusaha (bento neon) */
+    .gallery-section {
+      max-width: 100%;
+      padding: 5rem 0 4rem;
+      position: relative;
+    }
+    .gallery-section::before {
+      content: '';
+      position: absolute;
+      left: 50%; top: 2rem;
+      transform: translateX(-50%);
+      width: min(520px, 80%);
+      height: 120px;
+      background: radial-gradient(ellipse, rgba(255,77,109,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .gallery-section .section-sub,
+    .gallery-section .section-title { padding: 0 1.5rem; }
+    .gallery-section .section-title::after {
+      content: '✦';
+      display: block;
+      font-size: 0.9rem;
+      color: var(--cyan);
+      margin-top: 0.5rem;
+      letter-spacing: 8px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .gallery-item {
+      opacity: 0;
+      transform: translateY(28px) scale(0.96);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+      transition-delay: calc(var(--i, 0) * 0.07s);
+      position: relative;
+    }
+    .gallery-item.visible { opacity: 1; transform: translateY(0) scale(1); }
+    .gallery-item:nth-child(1) { grid-column: 1 / span 7; grid-row: span 2; }
+    .gallery-item:nth-child(2) { grid-column: 8 / span 5; }
+    .gallery-item:nth-child(3) { grid-column: 8 / span 5; }
+    .gallery-item:nth-child(4) { grid-column: 1 / span 4; }
+    .gallery-item:nth-child(5) { grid-column: 5 / span 4; }
+    .gallery-item:nth-child(6) { grid-column: 9 / span 4; }
+    .gallery-item:nth-child(n+7) { grid-column: span 4; }
+
+    .memory-card {
+      position: relative;
+      height: 100%;
+      min-height: 180px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      transition: transform 0.45s ease, box-shadow 0.45s ease, border-color 0.45s ease;
+    }
+    .gallery-item:nth-child(1) .memory-card { min-height: 380px; }
+    .gallery-item:hover .memory-card {
+      transform: translateY(-6px);
+      border-color: rgba(0,245,212,0.45);
+      box-shadow:
+        0 20px 50px rgba(0,0,0,0.45),
+        0 0 30px rgba(255,77,109,0.15),
+        0 0 60px rgba(0,245,212,0.1);
+    }
+    .memory-glow {
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(135deg, rgba(255,77,109,0.35) 0%, transparent 45%, rgba(0,245,212,0.3) 100%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+    .gallery-item:hover .memory-glow { opacity: 1; }
+    .memory-frame {
+      position: absolute; inset: 0;
+      overflow: hidden;
+    }
+    .memory-frame img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: saturate(0.85) contrast(1.05);
+      transition: transform 0.7s ease, filter 0.5s ease;
+    }
+    .gallery-item:hover .memory-frame img {
+      transform: scale(1.08);
+      filter: saturate(1.1) contrast(1.05);
+    }
+    .memory-tag {
+      position: absolute;
+      bottom: 12px; left: 14px; z-index: 2;
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.9);
+      background: rgba(10,10,15,0.65);
+      border: 1px solid rgba(0,245,212,0.35);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+    }
+
+    /* LOVE — split */
+    .love-section {
+      max-width: 100%;
+      background: linear-gradient(90deg, rgba(255,77,109,0.15) 0%, transparent 50%, rgba(0,245,212,0.15) 100%);
+      padding: 5rem 1.5rem;
+    }
+    .love-quote-box {
+      max-width: 750px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 2rem;
+      align-items: center;
+      opacity: 0;
+      transition: 0.8s;
+    }
+    .love-quote-box.visible { opacity: 1; }
+    .love-line { width: 1px; height: 120px; background: linear-gradient(to bottom, var(--neon), var(--cyan)); }
+    .love-quote-text {
+      grid-column: 1 / -1;
+      font-size: 1.1rem;
+      line-height: 2;
+      color: rgba(255,255,255,0.85);
+      font-weight: 300;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .love-sign {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-family: 'Abril Fatface', serif;
+      font-size: 1.5rem;
+      color: var(--neon);
+    }
+
+    /* COUNTDOWN — flip */
+    .countdown-section { text-align: center; max-width: 100%; }
+    .countdown {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    .countdown-item {
+      perspective: 200px;
+    }
+    .flip-box {
+      background: #15151f;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      min-width: 75px;
+    }
+    .countdown-num {
+      font-family: 'Abril Fatface', serif;
+      font-size: 2.5rem;
+      color: var(--cyan);
+      display: block;
+    }
+    .countdown-label {
+      font-size: 0.55rem;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 0.4rem;
+      text-transform: uppercase;
+    }
+
+    .venue-section { text-align: center; padding: 4rem 1.5rem; }
+    .venue-box {
+      max-width: 500px; margin: 0 auto; padding: 2rem;
+      border: 1px solid rgba(255,77,109,0.35); border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+    }
+    .venue-name {
+      font-family: 'Abril Fatface', serif; font-size: 1.4rem;
+      background: linear-gradient(90deg, var(--neon), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .venue-detail { color: rgba(255,255,255,0.55); margin-top: 0.5rem; line-height: 1.7; }
+    .venue-btn {
+      display: inline-block; margin-top: 1.25rem; padding: 0.75rem 1.5rem;
+      border: 1px solid var(--cyan); color: var(--cyan); text-decoration: none;
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .venue-btn:hover { background: var(--cyan); color: #0a0a12; }
+
+    footer {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    footer .footer-names {
+      font-family: 'Abril Fatface', serif;
+      font-size: 2rem;
+      background: linear-gradient(90deg, var(--neon), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    footer p { font-size: 0.7rem; color: rgba(255,255,255,0.35); letter-spacing: 2px; }
+
+    .sparkles, .splash-petals, .petals { display: none; }
+    .reveal { opacity: 0; transform: translateY(25px); transition: 0.7s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 768px) {
+      .couple-grid { grid-template-columns: 1fr; }
+      .gallery {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 0 1rem;
+      }
+      .gallery-item,
+      .gallery-item:nth-child(n) {
+        grid-column: span 1 !important;
+        grid-row: span 1 !important;
+      }
+      .gallery-item:nth-child(1) { grid-column: 1 / -1 !important; }
+      .gallery-item:nth-child(1) .memory-card { min-height: 220px; }
+      .memory-card { min-height: 150px; border-radius: 14px; }
+      .love-line { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <audio id="weddingMusic" loop preload="auto" playsinline></audio>
+
+  <div class="splash" id="splash">
+    <div class="splash-inner" id="splashCard">
+      <div class="neon-ring"><span id="splashInitials">A & A</span></div>
+      <p id="splashSub"></p>
+      <div class="splash-names-stack">
+        <span id="splashGroom"></span>
+        <div class="splash-amp-line"></div>
+        <span id="splashBride"></span>
+      </div>
+      <p id="splashHint"></p>
+    </div>
+  </div>
+
+  <button class="music-control" id="musicControl" aria-label="Muusig">
+    <span class="music-icon-play">&#9835;</span>
+    <span class="music-waves"><span></span><span></span><span></span></span>
+  </button>
+
+  <header class="hero">
+    <div class="hero-mesh"></div>
+    <div class="hero-mesh2"></div>
+    <div id="heroBg"></div>
+    <div class="hero-content">
+      <p id="heroSub"></p>
+      <div class="hero-mega">
+        <span id="heroGroom"></span>
+        <span class="hero-ampersand">&</span>
+        <span id="heroBride"></span>
+      </div>
+      <p id="heroDate"></p>
+      <p id="heroTime" style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;letter-spacing:2px"></p>
+    </div>
+    <p class="scroll-hint" id="scrollHint"></p>
+  </header>
+
+  <section class="couple-section">
+    <p class="section-sub reveal" id="coupleSub"></p>
+    <h2 class="section-title reveal" id="coupleTitle"></h2>
+    <div class="couple-grid" id="coupleGrid"></div>
+  </section>
+
+  <section class="gallery-section">
+    <p class="section-sub reveal" id="gallerySub"></p>
+    <h2 class="section-title reveal" id="galleryTitle"></h2>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="love-section">
+    <p class="section-sub reveal" id="loveSub"></p>
+    <h2 class="section-title reveal" id="loveTitle"></h2>
+    <div class="love-quote-box reveal">
+      <div class="love-line"></div>
+      <p class="love-quote-text" id="loveQuote"></p>
+      <p class="love-sign" id="loveSign"></p>
+    </div>
+  </section>
+
+  <section class="countdown-section">
+    <p class="section-sub reveal" id="countdownSub"></p>
+    <h2 class="section-title reveal" id="countdownTitle"></h2>
+    <div class="countdown">
+      <div class="countdown-item"><div class="flip-box"><span class="countdown-num" id="days">00</span><span class="countdown-label" id="labelDays"></span></div></div>
+      <div class="countdown-item"><div class="flip-box"><span class="countdown-num" id="hours">00</span><span class="countdown-label" id="labelHours"></span></div></div>
+      <div class="countdown-item"><div class="flip-box"><span class="countdown-num" id="mins">00</span><span class="countdown-label" id="labelMins"></span></div></div>
+      <div class="countdown-item"><div class="flip-box"><span class="countdown-num" id="secs">00</span><span class="countdown-label" id="labelSecs"></span></div></div>
+    </div>
+  </section>
+
+  <section class="venue-section">
+    <p class="section-sub reveal" id="venueSub"></p>
+    <h2 class="section-title reveal" id="venueTitle"></h2>
+    <div class="venue-box reveal">
+      <p class="venue-name" id="venueName"></p>
+      <p class="venue-detail" id="venueAddress"></p>
+      <p class="venue-detail" id="venueTime"></p>
+      <a class="venue-btn reveal" id="venueBtn" href="#">Khariidadda</a>
+    </div>
+  </section>
+
+  <footer>
+    <span class="footer-names" id="footerNames"></span>
+    <p id="footerTag"></p>
+  </footer>
+
+  <script src="image-tools.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
